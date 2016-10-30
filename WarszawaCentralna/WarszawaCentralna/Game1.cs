@@ -21,6 +21,9 @@ namespace WarszawaCentralna
         List<Cuboid> cuboids;
         Effect effect;
         Scene scene;
+        PointLight changingLight;
+        double time;
+        int selectedColor;
 
         public Game1()
         {
@@ -28,6 +31,8 @@ namespace WarszawaCentralna
             Content.RootDirectory = "Content";
             models = new List<MyModel>();
             cuboids = new List<Cuboid>();
+            time = 0;
+            selectedColor = 0;
         }
 
         protected override void Initialize()
@@ -53,11 +58,13 @@ namespace WarszawaCentralna
 
             PointLight pl1 = new PointLight(new Vector3(50, 19, 0), Color.LightYellow, Color.LightYellow, 0.9f, 1.0f, 50.0f, 3.0f);
             PointLight pl2 = new PointLight(new Vector3(-50, 19, 0), Color.LightYellow, Color.LightYellow, 0.9f, 1.0f, 50.0f, 2.0f);
+            changingLight = new PointLight(new Vector3(0, 19, 0), Color.LightYellow, Color.LightYellow, 0.9f, 1.0f, 50.0f, 2.0f);
             SpotLight sl1 = new SpotLight(new Vector3(45, 10, -25), Color.Yellow, Color.Yellow, 1.0f, 1.0f, 100.0f, 2.0f, new Vector3(1, 0, 0), MathHelper.PiOver4 / 2, MathHelper.PiOver4);
             SpotLight sl2 = new SpotLight(new Vector3(-99, 0, 0), Color.DarkOliveGreen, Color.DarkOliveGreen, 0.5f, 0.5f, 150.0f, 5.0f, new Vector3(1, 0, 0), MathHelper.PiOver4, MathHelper.PiOver2);
 
             lightManager.addPointLight(pl1);
             lightManager.addPointLight(pl2);
+            lightManager.addPointLight(changingLight);
             lightManager.addSpotLight(sl1);
             lightManager.addSpotLight(sl2);
             lightManager.SetEffectParameters();
@@ -110,8 +117,23 @@ namespace WarszawaCentralna
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
             camera.Update();
+            changeLights(gameTime);
             base.Update(gameTime);
         }
+
+        private void changeLights(GameTime gameTime)
+        {
+            Color[] colors = { Color.Red, Color.Yellow, Color.GreenYellow, Color.Green, Color.CornflowerBlue, Color.Blue, Color.Violet };
+            time += gameTime.ElapsedGameTime.TotalSeconds;
+            if (time > 1)
+            {
+                time = 0;
+                selectedColor = (selectedColor + 1) % colors.Length;
+                changingLight.Kd = changingLight.Ks = colors[selectedColor];
+                lightManager.SetEffectParameters();
+            }
+        }
+
 
         protected override void Draw(GameTime gameTime)
         {

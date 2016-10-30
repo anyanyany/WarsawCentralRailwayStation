@@ -1,4 +1,4 @@
-﻿#define POINT_LIGHT_NUMBER 2
+﻿#define POINT_LIGHT_NUMBER 3
 #define SPOT_LIGHT_NUMBER 2
 
 float3 CameraPosition;

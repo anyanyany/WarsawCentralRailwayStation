@@ -23,7 +23,6 @@ namespace WarszawaCentralna
             Target = _target;
             UpVector = _upVector;
             ProjectionMatrix = _projectionMatrix;
-            Console.WriteLine("UP " + UpVector.ToString() + " POS " + Position.ToString() + " TAR " + Target.ToString());
             CreateLookAt();
         }
 
@@ -48,17 +47,33 @@ namespace WarszawaCentralna
                 Vector3 right = Vector3.Cross(UpVector, cameraDirection);
                 right.Normalize();
                 Position += right * speed;
+                Target += right * speed;
+                /*
+                Vector3 right = Vector3.Cross(UpVector, cameraDirection);
+                right.Normalize();
+                Position += right * speed;
+                */
             }
             if (Keyboard.GetState().IsKeyDown(Keys.Right))
             {
+                Vector3 right = Vector3.Cross(UpVector, cameraDirection);
+                right.Normalize();
+                Position -= right * speed;
+                Target -= right * speed;
+                /*
                 //Position -= Vector3.Cross(UpVector, cameraDirection) * speed;
                 Vector3 right = Vector3.Cross(UpVector, cameraDirection);
                 right.Normalize();
                 Position -= right * speed;
+                */
             }
 
             if (Keyboard.GetState().IsKeyDown(Keys.Up))
             {
+                Position += UpVector * speed;
+                Target += UpVector * speed;
+
+                /*
                 float lookAtVectorLength = cameraDirection.Length();
                 Vector3 right = Vector3.Cross(UpVector, cameraDirection);
                 right.Normalize();
@@ -68,10 +83,15 @@ namespace WarszawaCentralna
                 cameraDirection.Normalize();
                 cameraDirection = cameraDirection * lookAtVectorLength;
                 Position = Target - cameraDirection;
+                */
 
             }
             if (Keyboard.GetState().IsKeyDown(Keys.Down))
             {
+                Position -= UpVector * speed;
+                Target -= UpVector * speed;
+
+                /*
                 float lookAtVectorLength = cameraDirection.Length();
                 Vector3 right = Vector3.Cross(UpVector, cameraDirection);
                 right.Normalize();
@@ -81,6 +101,7 @@ namespace WarszawaCentralna
                 cameraDirection.Normalize();
                 cameraDirection = cameraDirection * lookAtVectorLength;
                 Position = Target - cameraDirection;
+                */
             }
 
             if (Keyboard.GetState().IsKeyDown(Keys.A))

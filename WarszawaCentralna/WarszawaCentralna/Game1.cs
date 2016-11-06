@@ -56,9 +56,9 @@ namespace WarszawaCentralna
 
             lightManager = new LightManager(effect);
 
-            PointLight pl1 = new PointLight(new Vector3(50, 19, 0), Color.LightYellow, Color.LightYellow, 0.9f, 1.0f, 50.0f, 3.0f);
-            PointLight pl2 = new PointLight(new Vector3(-50, 19, 0), Color.LightYellow, Color.LightYellow, 0.9f, 1.0f, 50.0f, 2.0f);
-            changingLight = new PointLight(new Vector3(0, 19, 0), Color.LightYellow, Color.LightYellow, 0.9f, 1.0f, 50.0f, 2.0f);
+            PointLight pl1 = new PointLight(new Vector3(50, 19, 0), Color.LightYellow, Color.LightYellow, 0.5f, 0.9f, 50.0f, 3.0f);
+            PointLight pl2 = new PointLight(new Vector3(-50, 19, 0), Color.LightYellow, Color.LightYellow, 0.5f, 0.9f, 50.0f, 2.0f);
+            changingLight = new PointLight(new Vector3(0, 19, 0), Color.LightYellow, Color.LightYellow, 0.5f, 0.9f, 50.0f, 2.0f);
             SpotLight sl1 = new SpotLight(new Vector3(45, 10, -25), Color.Yellow, Color.Yellow, 1.0f, 1.0f, 100.0f, 2.0f, new Vector3(1, 0, 0), MathHelper.PiOver4 / 2, MathHelper.PiOver4);
             SpotLight sl2 = new SpotLight(new Vector3(-99, 0, 0), Color.DarkOliveGreen, Color.DarkOliveGreen, 0.5f, 0.5f, 150.0f, 5.0f, new Vector3(1, 0, 0), MathHelper.PiOver4, MathHelper.PiOver2);
 

@@ -7,13 +7,12 @@ float4x4 World;
 float4x4 View;
 float4x4 Projection;
 
-
 float3 Ka;
 float3 Kd[POINT_LIGHT_NUMBER + SPOT_LIGHT_NUMBER];
 float3 Ks[POINT_LIGHT_NUMBER + SPOT_LIGHT_NUMBER];
 
 float3 LightPosition[POINT_LIGHT_NUMBER + SPOT_LIGHT_NUMBER];
-float Ia = 0.9;
+float Ia;
 float Id[POINT_LIGHT_NUMBER + SPOT_LIGHT_NUMBER];
 float Is[POINT_LIGHT_NUMBER + SPOT_LIGHT_NUMBER];
 float Shininess;
@@ -24,9 +23,6 @@ float Falloff[POINT_LIGHT_NUMBER + SPOT_LIGHT_NUMBER];
 float3 LightDirection[SPOT_LIGHT_NUMBER];
 float InnerConeAngle[SPOT_LIGHT_NUMBER];
 float OuterConeAngle[SPOT_LIGHT_NUMBER];
-
-
-
 
 struct VertexShaderInput
 {
@@ -54,6 +50,12 @@ VertexShaderOutput VertexShaderFunction(VertexShaderInput input)
 float4 PixelShaderFunction(VertexShaderOutput input) : COLOR0
 {
 	float3 phonglLight = 0;
+	Ia = 0;
+	for (int i = 0; i < POINT_LIGHT_NUMBER + SPOT_LIGHT_NUMBER; i++)
+	{
+		Ia += Is[i] + Id[i];
+	}
+	Ia = clamp(Ia, 0, 1);
 	float3 Ambient = Ka * Ia;
 	phonglLight += Ambient;
 	for (int i = 0; i < POINT_LIGHT_NUMBER + SPOT_LIGHT_NUMBER; i++)

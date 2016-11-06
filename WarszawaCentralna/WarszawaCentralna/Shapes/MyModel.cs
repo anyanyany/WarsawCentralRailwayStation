@@ -31,8 +31,6 @@ namespace WarszawaCentralna.Shapes
                 {
                     effect.Parameters["World"].SetValue(worldMatrix);
                     effect.Parameters["Ka"].SetValue(color.ToVector3());
-                    //effect.Parameters["Kd"].SetValue(color.ToVector3());
-                    //effect.Parameters["Ks"].SetValue(color.ToVector3());
                     effect.Parameters["Shininess"].SetValue(shininess);
                     part.Effect = effect;
                 }

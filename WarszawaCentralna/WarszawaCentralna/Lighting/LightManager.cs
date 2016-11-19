@@ -10,13 +10,13 @@ namespace WarszawaCentralna.Lighting
 {
     class LightManager
     {
-        public Effect effect;
+        public List<Effect> effects;
         List<PointLight> pointLights;
         List<SpotLight> spotLights;
 
-        public LightManager(Effect _effect)
+        public LightManager(List<Effect> _effects)
         {
-            effect = _effect;
+            effects = _effects;
             pointLights = new List<PointLight>();
             spotLights = new List<SpotLight>();
         }
@@ -73,17 +73,20 @@ namespace WarszawaCentralna.Lighting
                 OuterConeAngle[i] = spotLights.ElementAt(i).OuterConeAngle;
             }
 
-            effect.Parameters["LightPosition"].SetValue(Position);
-            effect.Parameters["Id"].SetValue(Id);
-            effect.Parameters["Is"].SetValue(Is);
-            effect.Parameters["Kd"].SetValue(Kd);
-            effect.Parameters["Ks"].SetValue(Ks);
-            effect.Parameters["Attenuation"].SetValue(Attenuation);
-            effect.Parameters["Falloff"].SetValue(Falloff);
-            effect.Parameters["LightDirection"].SetValue(Direction);
-            effect.Parameters["InnerConeAngle"].SetValue(InnerConeAngle);
-            effect.Parameters["OuterConeAngle"].SetValue(OuterConeAngle);
-
+            foreach (Effect effect in effects)
+            {
+                effect.Parameters["LightPosition"].SetValue(Position);
+                effect.Parameters["Id"].SetValue(Id);
+                effect.Parameters["Is"].SetValue(Is);
+                effect.Parameters["Kd"].SetValue(Kd);
+                effect.Parameters["Ks"].SetValue(Ks);
+                effect.Parameters["Attenuation"].SetValue(Attenuation);
+                effect.Parameters["Falloff"].SetValue(Falloff);
+                effect.Parameters["LightDirection"].SetValue(Direction);
+                effect.Parameters["InnerConeAngle"].SetValue(InnerConeAngle);
+                effect.Parameters["OuterConeAngle"].SetValue(OuterConeAngle);
+            }
+            
         }
     }
 }

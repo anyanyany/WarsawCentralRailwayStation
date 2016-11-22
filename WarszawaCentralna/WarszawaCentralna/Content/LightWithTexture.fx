@@ -1,7 +1,4 @@
-﻿#define VS_SHADERMODEL vs_4_0_level_9_1
-#define PS_SHADERMODEL ps_4_0_level_9_1
-
-#define POINT_LIGHT_NUMBER 3
+﻿#define POINT_LIGHT_NUMBER 3
 #define SPOT_LIGHT_NUMBER 2
 
 float3 CameraPosition;
@@ -27,14 +24,25 @@ float3 LightDirection[SPOT_LIGHT_NUMBER];
 float InnerConeAngle[SPOT_LIGHT_NUMBER];
 float OuterConeAngle[SPOT_LIGHT_NUMBER];
 
-texture BasicTexture;
 
-sampler BasicTextureSampler = sampler_state {
+texture BasicTexture;
+bool filterMagLinear;
+float bias = 10.0;
+
+sampler TextureSamplerMagLinear = sampler_state {
 	texture = <BasicTexture>;
-	MinFilter = Linear; //Controls sampling. None, Linear, or Point.
-	MagFilter = None; 
-	MipFilter = None;
+	MagFilter = Linear;
+
+	MipLODBias = 10;
 };
+
+sampler TextureSamplerMagNone = sampler_state {
+	texture = <BasicTexture>;
+	MagFilter = None;
+};
+
+
+
 
 bool TextureEnabled = true;
 
@@ -75,7 +83,12 @@ float4 PixelShaderFunction(VertexShaderOutput input) : COLOR0
 	Ia = clamp(Ia, 0, 1);
 	float3 Ambient = Ka * Ia;
 	if (TextureEnabled)
-		Ambient *= tex2D(BasicTextureSampler, input.UV).rgb;
+	{
+		if(filterMagLinear)
+			Ambient *= tex2D(TextureSamplerMagLinear, input.UV).rgb;
+		else
+			Ambient *= tex2D(TextureSamplerMagNone, input.UV).rgb;
+	}
 	phonglLight += Ambient;
 	for (int i = 0; i < POINT_LIGHT_NUMBER + SPOT_LIGHT_NUMBER; i++)
 	{

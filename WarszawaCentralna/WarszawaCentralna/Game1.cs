@@ -18,6 +18,7 @@ namespace WarszawaCentralna
         private Texture2D wallTexture;
         private Texture2D concreteTexture;
         private Texture2D lampTexture;
+        private Texture2D ironmanTexture;
         Camera camera;
         LightManager lightManager;
         List<MyModel> models;
@@ -29,6 +30,7 @@ namespace WarszawaCentralna
         PointLight changingLight;
         double time;
         int selectedColor;
+        bool filterMagLinear;
 
         public Game1()
         {
@@ -39,6 +41,7 @@ namespace WarszawaCentralna
             effects = new List<Effect>();
             time = 0;
             selectedColor = 0;
+            filterMagLinear = true;
         }
 
         protected override void Initialize()
@@ -60,6 +63,7 @@ namespace WarszawaCentralna
             effectWithTexture = Content.Load<Effect>("LightWithTexture");
             effectWithoutTexture = Content.Load<Effect>("LightWithoutTexture");
             concreteTexture = Content.Load<Texture2D>("concrete");
+            ironmanTexture = Content.Load<Texture2D>("ironman.dff");
             wallTexture = Content.Load<Texture2D>("wall");
             lampTexture = Content.Load<Texture2D>("lamp");
 
@@ -132,6 +136,13 @@ namespace WarszawaCentralna
                 Exit();
             camera.Update();
             changeLights(gameTime);
+
+            if (Keyboard.GetState().IsKeyDown(Keys.Z))
+            {
+                filterMagLinear = !filterMagLinear;
+                effectWithTexture.Parameters["filterMagLinear"].SetValue(filterMagLinear);
+            }
+
             base.Update(gameTime);
         }
 
@@ -154,7 +165,6 @@ namespace WarszawaCentralna
             GraphicsDevice.Clear(Color.Black);
             effectWithTexture.Parameters["View"].SetValue(camera.ViewMatrix);
             effectWithTexture.Parameters["Projection"].SetValue(camera.ProjectionMatrix);
-            effectWithTexture.Parameters["TextureEnabled"].SetValue(true);
 
             effectWithoutTexture.Parameters["View"].SetValue(camera.ViewMatrix);
             effectWithoutTexture.Parameters["Projection"].SetValue(camera.ProjectionMatrix);
@@ -165,6 +175,8 @@ namespace WarszawaCentralna
                 model.Draw(effectWithoutTexture);
             foreach (Cuboid cuboid in cuboids)
                 cuboid.Draw(effectWithTexture, graphics);
+            effectWithTexture.Parameters["BasicTexture"].SetValue(ironmanTexture);           
+            models[7].Draw(effectWithTexture);
             base.Draw(gameTime);
         }
     }

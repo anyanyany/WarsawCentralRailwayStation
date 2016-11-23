@@ -27,24 +27,25 @@ float OuterConeAngle[SPOT_LIGHT_NUMBER];
 
 texture BasicTexture;
 bool filterMagLinear;
-float bias = 10.0;
 
 sampler TextureSamplerMagLinear = sampler_state {
 	texture = <BasicTexture>;
 	MagFilter = Linear;
-
 	MipLODBias = 10;
 };
 
 sampler TextureSamplerMagNone = sampler_state {
 	texture = <BasicTexture>;
 	MagFilter = None;
+	//MipLODBias = 10;
 };
 
-
-
-
 bool TextureEnabled = true;
+
+float     FogEnabled = 1;
+float     FogStart = 50;
+float     FogEnd = 100;
+float3    FogColor = float3(0,0,0);
 
 struct VertexShaderInput
 {
@@ -59,6 +60,14 @@ struct VertexShaderOutput
 	float4 WorldPosition : TEXCOORD1;
 	float2 UV : TEXCOORD2;
 };
+
+float ComputeFogFactor(float d)
+{
+	//d is the distance to the geometry sampling from the camera
+	//this simply returns a value that interpolates from 0 to 1 
+	//with 0 starting at FogStart and 1 at FogEnd 
+	return clamp((d - FogStart) / (FogEnd - FogStart), 0, 1) * FogEnabled;
+}
 
 VertexShaderOutput VertexShaderFunction(VertexShaderInput input)
 {
@@ -121,8 +130,12 @@ float4 PixelShaderFunction(VertexShaderOutput input) : COLOR0
 		}
 		phonglLight += (Diffuse + Specular)*att*spotFactor;
 	}
+	float FogFactor = ComputeFogFactor(length(CameraPosition - input.WorldPosition.xyz));
 
 	float3 light = saturate(phonglLight);
+
+	light = lerp(FogColor, light, FogFactor);
+
 	return float4(light, 1);
 }
 

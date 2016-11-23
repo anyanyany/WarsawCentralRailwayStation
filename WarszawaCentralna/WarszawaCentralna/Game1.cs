@@ -42,6 +42,7 @@ namespace WarszawaCentralna
             time = 0;
             selectedColor = 0;
             filterMagLinear = true;
+            graphics.PreferMultiSampling = false;
         }
 
         protected override void Initialize()
@@ -141,6 +142,10 @@ namespace WarszawaCentralna
             {
                 filterMagLinear = !filterMagLinear;
                 effectWithTexture.Parameters["filterMagLinear"].SetValue(filterMagLinear);
+            }
+            if (Keyboard.GetState().IsKeyDown(Keys.M))
+            {
+                graphics.PreferMultiSampling = !graphics.PreferMultiSampling;
             }
 
             base.Update(gameTime);

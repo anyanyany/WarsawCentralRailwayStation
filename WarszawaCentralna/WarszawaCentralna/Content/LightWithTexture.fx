@@ -25,27 +25,34 @@ float InnerConeAngle[SPOT_LIGHT_NUMBER];
 float OuterConeAngle[SPOT_LIGHT_NUMBER];
 
 
-texture BasicTexture;
+Texture2D  BasicTexture;
+Texture2D  AdditionalTexture;
+
+bool TextureEnabled = true;
+bool SecondTextureEnabled = false;
+
 bool filterMagLinear;
 
 sampler TextureSamplerMagLinear = sampler_state {
-	texture = <BasicTexture>;
+	//texture = <BasicTexture>;
 	MagFilter = Linear;
 	MipLODBias = 10;
+	AddressU = Wrap;
+	AddressV = Wrap;
 };
 
 sampler TextureSamplerMagNone = sampler_state {
-	texture = <BasicTexture>;
+	//texture = <BasicTexture>;
 	MagFilter = None;
 	//MipLODBias = 10;
+	AddressU = Wrap;
+	AddressV = Wrap;
 };
-
-bool TextureEnabled = true;
 
 float     FogEnabled = 1;
 float     FogStart = 50;
-float     FogEnd = 100;
-float3    FogColor = float3(0,0,0);
+float     FogEnd = 150;
+float3    FogColor = float3(0.5, 0.5, 0.5);
 
 struct VertexShaderInput
 {
@@ -93,10 +100,27 @@ float4 PixelShaderFunction(VertexShaderOutput input) : COLOR0
 	float3 Ambient = Ka * Ia;
 	if (TextureEnabled)
 	{
-		if(filterMagLinear)
-			Ambient *= tex2D(TextureSamplerMagLinear, input.UV).rgb;
+		if (filterMagLinear)
+		{
+			Ambient *= BasicTexture.Sample(TextureSamplerMagLinear, input.UV).rgb;
+			if (SecondTextureEnabled)
+			{
+				float4 secondTextureColor = AdditionalTexture.Sample(TextureSamplerMagLinear, input.UV);
+				if (secondTextureColor.a != 0)
+					Ambient *= secondTextureColor.rgb;
+			}			
+		}
 		else
-			Ambient *= tex2D(TextureSamplerMagNone, input.UV).rgb;
+		{
+			Ambient *= BasicTexture.Sample(TextureSamplerMagNone, input.UV).rgb;
+			if (SecondTextureEnabled)
+			{
+				float4 secondTextureColor = AdditionalTexture.Sample(TextureSamplerMagNone, input.UV);
+				if (secondTextureColor.a != 0)
+					Ambient *= secondTextureColor.rgb;
+			}
+		}
+			
 	}
 	phonglLight += Ambient;
 	for (int i = 0; i < POINT_LIGHT_NUMBER + SPOT_LIGHT_NUMBER; i++)
@@ -134,7 +158,7 @@ float4 PixelShaderFunction(VertexShaderOutput input) : COLOR0
 
 	float3 light = saturate(phonglLight);
 
-	light = lerp(FogColor, light, FogFactor);
+	light = lerp(light, FogColor, FogFactor);
 
 	return float4(light, 1);
 }

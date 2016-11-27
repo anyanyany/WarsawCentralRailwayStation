@@ -16,9 +16,10 @@ namespace WarszawaCentralna.Shapes
         Color color;
         float shininess;
         Texture2D texture;
+        Texture2D secondTexture;
         bool textureEnabled;
 
-        public Cuboid(float length, float height, float width, Vector3 _position, Color _color, float _shininess, bool _textureEnabled, Texture2D _texture = null)
+        public Cuboid(float length, float height, float width, Vector3 _position, Color _color, float _shininess, bool _textureEnabled, Texture2D _texture = null, Texture2D _secondTexture = null)
         {
             position = _position;
             color = _color;
@@ -30,6 +31,7 @@ namespace WarszawaCentralna.Shapes
             width = width / 2;
             textureEnabled = _textureEnabled;
             texture = _texture;
+            secondTexture = _secondTexture;
 
             Vector3 UpLeftNear = position + new Vector3(-length, height, -width);
             Vector3 UpLeftFar = position + new Vector3(-length, height, width);
@@ -65,14 +67,27 @@ namespace WarszawaCentralna.Shapes
 
         }
 
+        public void ChangeTexture(Texture2D _texture)
+        {
+            texture = _texture;
+        }
+
         public void Draw(Effect effect, GraphicsDeviceManager graphics)
         {
             effect.Parameters["World"].SetValue(worldMatrix);
             effect.Parameters["Ka"].SetValue(color.ToVector3());
             effect.Parameters["Shininess"].SetValue(shininess);
             effect.Parameters["TextureEnabled"].SetValue(textureEnabled);
+            effect.Parameters["SecondTextureEnabled"].SetValue(false);
             if (textureEnabled)
+            {
                 effect.Parameters["BasicTexture"].SetValue(texture);
+                if (secondTexture != null)
+                {
+                    effect.Parameters["SecondTextureEnabled"].SetValue(true);
+                    effect.Parameters["AdditionalTexture"].SetValue(secondTexture);
+                }
+            }
 
             foreach (var pass in effect.CurrentTechnique.Passes)
             {

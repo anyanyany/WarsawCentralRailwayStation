@@ -62,6 +62,11 @@ namespace WarszawaCentralna.Shapes
             vertices[index + 5] = new VertexPositionNormalTexture(DownLeft, normalVector, new Vector2(0, 1));
         }
 
+        public void ChangeTexture(Texture2D _texture)
+        {
+            texture = _texture;
+        }
+
         public void Draw(Effect effect, GraphicsDeviceManager graphics)
         {
             effect.Parameters["World"].SetValue(worldMatrix);

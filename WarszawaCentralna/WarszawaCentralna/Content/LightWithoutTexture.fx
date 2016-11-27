@@ -24,6 +24,11 @@ float3 LightDirection[SPOT_LIGHT_NUMBER];
 float InnerConeAngle[SPOT_LIGHT_NUMBER];
 float OuterConeAngle[SPOT_LIGHT_NUMBER];
 
+float     FogEnabled = 1;
+float     FogStart = 50;
+float     FogEnd = 150;
+float3    FogColor = float3(0.5, 0.5, 0.5);
+
 struct VertexShaderInput
 {
 	float4 Position : POSITION0;
@@ -35,6 +40,14 @@ struct VertexShaderOutput
 	float3 Normal : TEXCOORD0;
 	float4 WorldPosition : TEXCOORD1;
 };
+
+float ComputeFogFactor(float d)
+{
+	//d is the distance to the geometry sampling from the camera
+	//this simply returns a value that interpolates from 0 to 1 
+	//with 0 starting at FogStart and 1 at FogEnd 
+	return clamp((d - FogStart) / (FogEnd - FogStart), 0, 1) * FogEnabled;
+}
 
 VertexShaderOutput VertexShaderFunction(VertexShaderInput input)
 {
@@ -87,7 +100,12 @@ float4 PixelShaderFunction(VertexShaderOutput input) : COLOR0
 		phonglLight += (Diffuse + Specular)*att*spotFactor;
 	}
 
+	float FogFactor = ComputeFogFactor(length(CameraPosition - input.WorldPosition.xyz));
+
 	float3 light = saturate(phonglLight);
+
+	light = lerp(light, FogColor, FogFactor);
+
 	return float4(light, 1);
 }
 

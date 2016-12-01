@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using WarszawaCentralna.Lighting;
@@ -63,11 +64,7 @@ namespace WarszawaCentralna
             Matrix projectionMatrix = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45f), GraphicsDevice.DisplayMode.AspectRatio, 1f, 1000f);
             camera = new Camera(camPosition, camTarget, Vector3.Up, projectionMatrix);
             keyboardOldState = Keyboard.GetState();
-
-            Stream stream = File.Create("PERLIN.png");
-            Texture2D perlin = CreatePerlinNoiseTexture(500, 300, 12, 10, 5, 8);
-            perlin.SaveAsPng(stream, 500, 200);
-            stream.Dispose();
+         
 
             renderTarget = new RenderTarget2D(
                 GraphicsDevice,
@@ -95,7 +92,11 @@ namespace WarszawaCentralna
             woodTexture = Content.Load<Texture2D>("wood");
             platformTexture = concreteTexture;
             sceneTexture = wallTexture;
-            perlinTexture= CreatePerlinNoiseTexture(500, 300, 12, 10, 5, 8);
+
+            Stream stream = File.Create("PERLIN.png");
+            perlinTexture = CreatePerlinNoiseTexture(1000, 400);
+            perlinTexture.SaveAsPng(stream, 1000, 400);
+            stream.Dispose();
 
             effects.Add(effectWithTexture);
             effects.Add(effectWithoutTexture);
@@ -202,7 +203,7 @@ namespace WarszawaCentralna
                 }
             }
 
-            if (keyboardNewState.IsKeyDown(Keys.P)) 
+            if (keyboardNewState.IsKeyDown(Keys.P))
             {
                 if (!keyboardOldState.IsKeyDown(Keys.P))
                 {
@@ -281,23 +282,34 @@ namespace WarszawaCentralna
             GraphicsDevice.SetRenderTarget(null);
         }
 
-        public Texture2D CreatePerlinNoiseTexture(int sizex, int sizey, float frequencia, float amplitude, float persistence, int octave, bool mipmap = false)
+        public Texture2D CreatePerlinNoiseTexture(int sizex, int sizey)
         {
-            PerlinNoise pn = new PerlinNoise(sizex, sizey);
+            PerlinNoise pn = new PerlinNoise();
             Texture2D t = new Texture2D(GraphicsDevice, sizex, sizey);
+            double[,] perlin = new double[sizex, sizey];
             Color[] cor = new Color[sizex * sizey];
+            Random r = new Random();
+            
             for (int i = 0; i < sizex; i++)
             {
                 for (int j = 0; j < sizey; j++)
                 {
-                    float value = pn.GetRandomHeight(i, j, 1, frequencia, amplitude, persistence, octave);
-                    value = 0.5f * (1 + value);
-                    cor[i + j * sizex] = new Color(value, value, value);
+                    double value = pn.OctavePerlin((double)i /20, (double)j/20, 0,9,0.5);
+                    perlin[i, j] = value;
+                }
+            }
+
+            for (int i = 0; i < sizex; i++)
+            {
+                for (int j = 0; j < sizey; j++)
+                {
+                    cor[i + j * sizex] = new Color((float)perlin[i, j], (float)perlin[i, j], (float)perlin[i, j]);
                 }
             }
 
             t.SetData(cor);
             return t;
         }
+
     }
 }

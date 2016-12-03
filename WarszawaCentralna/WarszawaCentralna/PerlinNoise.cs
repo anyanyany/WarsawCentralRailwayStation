@@ -10,6 +10,8 @@ namespace WarszawaCentralna
 {
     public static class PerlinNoise
     {
+        //http://flafla2.github.io/2014/08/09/perlinnoise.html
+
         public static double OctavePerlin(double x, double y, double z, int octaves, double persistence)
         {
             double total = 0;
@@ -99,20 +101,26 @@ namespace WarszawaCentralna
 
         public static double grad(int hash, double x, double y, double z)
         {
-            int h = hash & 15;                                  // Take the hashed value and take the first 4 bits of it (15 == 0b1111)
-            double u = h < 8 /* 0b1000 */ ? x : y;              // If the most significant bit (MSB) of the hash is 0 then set u = x.  Otherwise y.
-
-            double v;                                           // In Ken Perlin's original implementation this was another conditional operator (?:).  I
-                                                                // expanded it for readability.
-
-            if (h < 4 /* 0b0100 */)                             // If the first and second significant bits are 0 set v = y
-                v = y;
-            else if (h == 12 /* 0b1100 */ || h == 14 /* 0b1110*/)// If the first and second significant bits are 1 set v = x
-                v = x;
-            else                                                // If the first and second significant bits are not equal (0/1, 1/0) set v = z
-                v = z;
-
-            return ((h & 1) == 0 ? u : -u) + ((h & 2) == 0 ? v : -v); // Use the last 2 bits to decide if u and v are positive or negative.  Then return their addition.
+            switch (hash & 0xF)
+            {
+                case 0x0: return x + y;
+                case 0x1: return -x + y;
+                case 0x2: return x - y;
+                case 0x3: return -x - y;
+                case 0x4: return x + z;
+                case 0x5: return -x + z;
+                case 0x6: return x - z;
+                case 0x7: return -x - z;
+                case 0x8: return y + z;
+                case 0x9: return -y + z;
+                case 0xA: return y - z;
+                case 0xB: return -y - z;
+                case 0xC: return y + x;
+                case 0xD: return -y + z;
+                case 0xE: return y - x;
+                case 0xF: return -y - z;
+                default: return 0; // never happens
+            }
         }
 
         public static double fade(double t)

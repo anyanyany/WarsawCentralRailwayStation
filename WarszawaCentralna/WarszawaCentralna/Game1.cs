@@ -44,7 +44,11 @@ namespace WarszawaCentralna
         bool filterMagLinear;
         KeyboardState keyboardOldState;
         RenderTarget2D renderTarget;
+        RenderTarget2D gaussRenderTarget;
         float fogEnabled;
+        bool gaussianBlurEnabled;
+        SpriteBatch spriteBatch;
+        bool multiSamplingEnabled;
 
         public Game1()
         {
@@ -57,8 +61,11 @@ namespace WarszawaCentralna
             time = 0;
             selectedColor = 0;
             filterMagLinear = true;
-            graphics.PreferMultiSampling = false;
+            multiSamplingEnabled = false;
+            graphics.PreferMultiSampling = true;
             fogEnabled = 1.0f;
+            gaussianBlurEnabled = false;
+
         }
 
         protected override void Initialize()
@@ -71,10 +78,12 @@ namespace WarszawaCentralna
             secondCamera = new Camera(camPosition, new Vector3(-30, 0, 0), Vector3.Up, projectionMatrix);
             keyboardOldState = Keyboard.GetState();
             renderTarget = new RenderTarget2D(GraphicsDevice, GraphicsDevice.PresentationParameters.BackBufferWidth, GraphicsDevice.PresentationParameters.BackBufferHeight, false, GraphicsDevice.PresentationParameters.BackBufferFormat, DepthFormat.Depth24);
+            gaussRenderTarget = new RenderTarget2D(GraphicsDevice, GraphicsDevice.PresentationParameters.BackBufferWidth, GraphicsDevice.PresentationParameters.BackBufferHeight, false, GraphicsDevice.PresentationParameters.BackBufferFormat, DepthFormat.Depth24);
         }
 
         protected override void LoadContent()
         {
+            spriteBatch = new SpriteBatch(GraphicsDevice);
             bench = Content.Load<Model>("Bench");
             train = Content.Load<Model>("Steam Locomotive");
             ironman = Content.Load<Model>("ironman");
@@ -91,10 +100,18 @@ namespace WarszawaCentralna
             platformTexture = concreteTexture;
             sceneTexture = wallTexture;
 
-            Stream stream = File.Create("PERLIN.png");
-            perlinTexture = CreatePerlinNoiseTexture(1000, 400);
-            perlinTexture.SaveAsPng(stream, 1000, 400);
-            stream.Dispose();
+            if (File.Exists("PERLIN.png"))
+            {
+                FileStream filestream = new FileStream("PERLIN.png", FileMode.Open);
+                perlinTexture = Texture2D.FromStream(GraphicsDevice, filestream);
+            }
+            else
+            {
+                Stream stream = File.Create("PERLIN.png");
+                perlinTexture = CreatePerlinNoiseTexture(1000, 400);
+                perlinTexture.SaveAsPng(stream, 1000, 400);
+                stream.Dispose();
+            }
 
             effects.Add(effectWithTexture);
             effects.Add(effectWithoutTexture);
@@ -185,7 +202,7 @@ namespace WarszawaCentralna
             {
                 if (!keyboardOldState.IsKeyDown(Keys.M))
                 {
-                    graphics.PreferMultiSampling = !graphics.PreferMultiSampling;
+                    multiSamplingEnabled = !multiSamplingEnabled;
                 }
             }
             if (keyboardNewState.IsKeyDown(Keys.T)) //Multiteksturowanie 
@@ -220,6 +237,14 @@ namespace WarszawaCentralna
                 }
             }
 
+            if (keyboardNewState.IsKeyDown(Keys.G)) //gauss
+            {
+                if (!keyboardOldState.IsKeyDown(Keys.G))
+                {
+                    gaussianBlurEnabled = !gaussianBlurEnabled;
+                }
+            }
+
             keyboardOldState = keyboardNewState;
             base.Update(gameTime);
         }
@@ -234,13 +259,21 @@ namespace WarszawaCentralna
                 selectedColor = (selectedColor + 1) % colors.Length;
                 changingLight.Kd = changingLight.Ks = colors[selectedColor];
                 lightManager.SetEffectParameters();
+
+                if (gaussianBlurEnabled)
+                {
+                    Vector3 camTarget = new Vector3(camera.Target.X + 5, camera.Target.Y, camera.Target.Z);
+                    Vector3 camPosition = camera.Position;
+                    Matrix projectionMatrix = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45f), GraphicsDevice.DisplayMode.AspectRatio, 1f, 1000f);
+                    camera = new Camera(camPosition, camTarget, Vector3.Up, projectionMatrix);
+                }
             }
         }
 
         protected void DrawScene(Camera _camera)
         {
             GraphicsDevice.Clear(Color.Black);
-            RasterizerState rasterizationState = new RasterizerState { MultiSampleAntiAlias = true };
+            RasterizerState rasterizationState = new RasterizerState { MultiSampleAntiAlias = multiSamplingEnabled };
             GraphicsDevice.RasterizerState = rasterizationState;
 
             effectWithTexture.Parameters["View"].SetValue(_camera.ViewMatrix);
@@ -268,8 +301,20 @@ namespace WarszawaCentralna
         protected override void Draw(GameTime gameTime)
         {
             DrawSceneToTexture(renderTarget, secondCamera); //can be camera
-            Texture2D tex = GaussianBlur(renderTarget);
             DrawScene(camera);
+
+            if (gaussianBlurEnabled)
+            {
+                DrawSceneToTexture(gaussRenderTarget, camera); //can be camera
+                Texture2D tex = GaussianBlur(gaussRenderTarget);
+                Stream stream = File.Create("GaussianBlur.png");
+                tex.SaveAsPng(stream, tex.Width, tex.Height);
+                stream.Dispose();
+
+                spriteBatch.Begin();
+                spriteBatch.Draw(tex, new Rectangle(0, 0, 800, 480), Color.White);
+                spriteBatch.End();
+            }
             base.Draw(gameTime);
         }
 
@@ -313,29 +358,78 @@ namespace WarszawaCentralna
             return t;
         }
 
-        public Texture2D GaussianBlur(Texture2D image)
+        public Texture2D GaussianBlur(Texture2D image) //https://en.wikipedia.org/wiki/Gaussian_blur
         {
             int sizex = image.Width;
             int sizey = image.Height;
             double minimumBrightness = 120;
             Color[] colors = new Color[sizex * sizey];
             image.GetData<Color>(colors);
+            int filterSize = 7;
+            double[,] filterMatrix = new double[filterSize, filterSize];
 
-            for (int i = 0; i < sizex; i++)
+            int filterOffset = (int)((filterSize - 1) / 2);
+            double blue;
+            double green;
+            double red;
+            int offset;
+            double stddev = 0.8; //radius=2x
+
+            for (int offsetY = filterOffset; offsetY < sizey - filterOffset; offsetY++)
             {
-                for (int j = 0; j < sizey; j++)
+                for (int offsetX = filterOffset; offsetX < sizex - filterOffset; offsetX++)
                 {
-                    int r = colors[i + (j * sizex)].R;
-                    int g = colors[i + (j * sizex)].G;
-                    int b = colors[i + (j * sizex)].B;
+                    int r = colors[offsetX + (offsetY * sizex)].R;
+                    int g = colors[offsetX + (offsetY * sizex)].G;
+                    int b = colors[offsetX + (offsetY * sizex)].B;
                     double L = 0.3 * r + 0.59 * g + 0.11 * b;
-                    if(L>=minimumBrightness)
+                    if (L >= minimumBrightness)
                     {
+                        stddev = 0.03*L / 2;
+                        double sum = 0;
+                        for (int x = -filterOffset; x <= filterOffset; x++)
+                        {
+                            for (int y = -filterOffset; y <= filterOffset; y++)
+                            {
+                                double value = Math.Exp(-(x * x + y * y) / (2 * stddev * stddev)) / (2 * Math.PI * stddev * stddev);
+                                filterMatrix[x + filterOffset, y + filterOffset] = value;
+                                sum += value;
+                            }
+                        }
+                        if (sum == 0)
+                            sum = 1;
 
+                        blue = 0;
+                        green = 0;
+                        red = 0;
+                        offset = offsetX + (offsetY * sizex);
+
+                        for (int filterY = -filterOffset; filterY <= filterOffset; filterY++)
+                        {
+                            for (int filterX = -filterOffset; filterX <= filterOffset; filterX++)
+                            {
+                                int calcOffset = offset + filterX + filterY * filterSize;
+                                blue += (colors[calcOffset].B) * filterMatrix[filterY + filterOffset, filterX + filterOffset];
+                                green += (colors[calcOffset].G) * filterMatrix[filterY + filterOffset, filterX + filterOffset];
+                                red += (colors[calcOffset].R) * filterMatrix[filterY + filterOffset, filterX + filterOffset];
+                            }
+                        }
+
+                        blue /= sum;
+                        red /= sum;
+                        green /= sum;
+                        blue = (blue > 255 ? 255 : (blue < 0 ? 0 : blue));
+                        green = (green > 255 ? 255 : (green < 0 ? 0 : green));
+                        red = (red > 255 ? 255 : (red < 0 ? 0 : red));
+
+                        colors[offset] = new Color((int)red, (int)green, (int)blue);
                     }
                 }
             }
-            return image;
+
+            Texture2D t = new Texture2D(GraphicsDevice, sizex, sizey);
+            t.SetData(colors);
+            return t;
         }
     }
 }

@@ -268,11 +268,12 @@ namespace WarszawaCentralna
         protected override void Draw(GameTime gameTime)
         {
             DrawSceneToTexture(renderTarget, secondCamera); //can be camera
+            Texture2D tex = GaussianBlur(renderTarget);
             DrawScene(camera);
             base.Draw(gameTime);
         }
 
-        protected void DrawSceneToTexture(RenderTarget2D renderTarget,Camera _camera)
+        protected void DrawSceneToTexture(RenderTarget2D renderTarget, Camera _camera)
         {
             //http://rbwhitaker.wikidot.com/render-to-texture
             // Set the render target
@@ -295,8 +296,9 @@ namespace WarszawaCentralna
             {
                 for (int j = 0; j < sizey; j++)
                 {
-                    double value = PerlinNoise.OctavePerlin((double)i / 20, (double)j / 20, 0, 9, 0.5);
-                    perlin[i, j] = value;
+                    perlin[i, j] = PerlinNoise.OctavePerlin((double)i / 20, (double)j / 20, 0, 9, 0.5);
+                    //http://www.upvector.com/?section=Tutorials&subsection=Intro%20to%20Procedural%20Textures
+                    perlin[i, j] = (1 + Math.Sin((i + perlin[i, j] / 2) * 50)) / 2;
                 }
             }
 
@@ -309,6 +311,31 @@ namespace WarszawaCentralna
             }
             t.SetData(cor);
             return t;
+        }
+
+        public Texture2D GaussianBlur(Texture2D image)
+        {
+            int sizex = image.Width;
+            int sizey = image.Height;
+            double minimumBrightness = 120;
+            Color[] colors = new Color[sizex * sizey];
+            image.GetData<Color>(colors);
+
+            for (int i = 0; i < sizex; i++)
+            {
+                for (int j = 0; j < sizey; j++)
+                {
+                    int r = colors[i + (j * sizex)].R;
+                    int g = colors[i + (j * sizex)].G;
+                    int b = colors[i + (j * sizex)].B;
+                    double L = 0.3 * r + 0.59 * g + 0.11 * b;
+                    if(L>=minimumBrightness)
+                    {
+
+                    }
+                }
+            }
+            return image;
         }
     }
 }

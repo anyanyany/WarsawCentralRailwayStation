@@ -24,7 +24,7 @@ float3 LightDirection[SPOT_LIGHT_NUMBER];
 float InnerConeAngle[SPOT_LIGHT_NUMBER];
 float OuterConeAngle[SPOT_LIGHT_NUMBER];
 
-float     FogEnabled = 1;
+float     FogEnabled;
 float     FogStart = 50;
 float     FogEnd = 150;
 float3    FogColor = float3(0.5, 0.5, 0.5);

@@ -28,8 +28,10 @@ namespace WarszawaCentralna
         private Texture2D sceneTexture;
         private Texture2D perlinTexture;
         Camera camera;
+        Camera secondCamera;
         LightManager lightManager;
-        List<MyModel> models;
+        List<MyModel> modelsWithoutTexture;
+        List<MyModel> modelsWithTexture;
         List<Cuboid> cuboids;
         Effect effectWithTexture;
         Effect effectWithoutTexture;
@@ -42,18 +44,21 @@ namespace WarszawaCentralna
         bool filterMagLinear;
         KeyboardState keyboardOldState;
         RenderTarget2D renderTarget;
+        float fogEnabled;
 
         public Game1()
         {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
-            models = new List<MyModel>();
+            modelsWithoutTexture = new List<MyModel>();
+            modelsWithTexture = new List<MyModel>();
             cuboids = new List<Cuboid>();
             effects = new List<Effect>();
             time = 0;
             selectedColor = 0;
             filterMagLinear = true;
             graphics.PreferMultiSampling = false;
+            fogEnabled = 1.0f;
         }
 
         protected override void Initialize()
@@ -63,16 +68,9 @@ namespace WarszawaCentralna
             Vector3 camPosition = new Vector3(0, 0, 100);
             Matrix projectionMatrix = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45f), GraphicsDevice.DisplayMode.AspectRatio, 1f, 1000f);
             camera = new Camera(camPosition, camTarget, Vector3.Up, projectionMatrix);
+            secondCamera = new Camera(camPosition, new Vector3(-30, 0, 0), Vector3.Up, projectionMatrix);
             keyboardOldState = Keyboard.GetState();
-         
-
-            renderTarget = new RenderTarget2D(
-                GraphicsDevice,
-                GraphicsDevice.PresentationParameters.BackBufferWidth,
-                GraphicsDevice.PresentationParameters.BackBufferHeight,
-                false,
-                GraphicsDevice.PresentationParameters.BackBufferFormat,
-                DepthFormat.Depth24);
+            renderTarget = new RenderTarget2D(GraphicsDevice, GraphicsDevice.PresentationParameters.BackBufferWidth, GraphicsDevice.PresentationParameters.BackBufferHeight, false, GraphicsDevice.PresentationParameters.BackBufferFormat, DepthFormat.Depth24);
         }
 
         protected override void LoadContent()
@@ -127,31 +125,31 @@ namespace WarszawaCentralna
             Matrix worldMatrix = Matrix.CreateRotationZ(-MathHelper.PiOver2) * Matrix.CreateRotationY(MathHelper.PiOver2) * Matrix.CreateScale(0.1f, 0.2f, 0.15f) * Matrix.CreateTranslation(0, 0, -25f);
             Color color = Color.Black;
             float shininess = 250f;
-            models.Add(new MyModel(train, worldMatrix, color, 100));
+            modelsWithoutTexture.Add(new MyModel(train, worldMatrix, color, 100, false));
 
             color = Color.Brown;
             worldMatrix = Matrix.CreateRotationZ(MathHelper.PiOver2) * Matrix.CreateRotationX(-MathHelper.PiOver2 + MathHelper.ToRadians(5)) * Matrix.CreateScale(8f, 0.07f, 0.3f) * Matrix.CreateTranslation(-7.5f, -8.5f, 0);
-            models.Add(new MyModel(bench, worldMatrix, color, shininess));
+            modelsWithoutTexture.Add(new MyModel(bench, worldMatrix, color, shininess, false));
             worldMatrix = Matrix.CreateRotationZ(-MathHelper.PiOver2) * Matrix.CreateRotationX(-MathHelper.PiOver2 + MathHelper.ToRadians(-5)) * Matrix.CreateScale(8f, 0.07f, 0.3f) * Matrix.CreateTranslation(7.5f, -8.5f, 0);
-            models.Add(new MyModel(bench, worldMatrix, color, shininess));
+            modelsWithoutTexture.Add(new MyModel(bench, worldMatrix, color, shininess, false));
             worldMatrix = Matrix.CreateRotationZ(MathHelper.PiOver2) * Matrix.CreateRotationX(-MathHelper.PiOver2 + MathHelper.ToRadians(5)) * Matrix.CreateScale(8f, 0.07f, 0.3f) * Matrix.CreateTranslation(-85, -8.5f, 0);
-            models.Add(new MyModel(bench, worldMatrix, color, shininess));
+            modelsWithoutTexture.Add(new MyModel(bench, worldMatrix, color, shininess, false));
             worldMatrix = Matrix.CreateRotationZ(-MathHelper.PiOver2) * Matrix.CreateRotationX(-MathHelper.PiOver2 + MathHelper.ToRadians(-5)) * Matrix.CreateScale(8f, 0.07f, 0.3f) * Matrix.CreateTranslation(-70, -8.5f, 0);
-            models.Add(new MyModel(bench, worldMatrix, color, shininess));
+            modelsWithoutTexture.Add(new MyModel(bench, worldMatrix, color, shininess, false));
             worldMatrix = Matrix.CreateRotationZ(MathHelper.PiOver2) * Matrix.CreateRotationX(-MathHelper.PiOver2 + MathHelper.ToRadians(5)) * Matrix.CreateScale(8f, 0.07f, 0.3f) * Matrix.CreateTranslation(70, -8.5f, 0);
-            models.Add(new MyModel(bench, worldMatrix, color, shininess));
+            modelsWithoutTexture.Add(new MyModel(bench, worldMatrix, color, shininess, false));
             worldMatrix = Matrix.CreateRotationZ(-MathHelper.PiOver2) * Matrix.CreateRotationX(-MathHelper.PiOver2 + MathHelper.ToRadians(-5)) * Matrix.CreateScale(8f, 0.07f, 0.3f) * Matrix.CreateTranslation(85, -8.5f, 0);
-            models.Add(new MyModel(bench, worldMatrix, color, shininess));
+            modelsWithoutTexture.Add(new MyModel(bench, worldMatrix, color, shininess, false));
 
             color = Color.Maroon;
             worldMatrix = Matrix.CreateRotationX(-MathHelper.PiOver2) * Matrix.CreateRotationY(MathHelper.PiOver4 / 2) * Matrix.CreateScale(8) * Matrix.CreateTranslation(-70, -10, -10);
-            models.Add(new MyModel(ironman, worldMatrix, color, shininess));
+            modelsWithTexture.Add(new MyModel(ironman, worldMatrix, color, shininess, true, ironmanTexture));
 
             color = Color.LightSteelBlue;
             worldMatrix = Matrix.CreateTranslation(40, -10, 0);
-            models.Add(new MyModel(trash, worldMatrix, color, shininess));
+            modelsWithoutTexture.Add(new MyModel(trash, worldMatrix, color, shininess, false));
             worldMatrix = Matrix.CreateTranslation(-40, -10, 0);
-            models.Add(new MyModel(trash, worldMatrix, color, shininess));
+            modelsWithoutTexture.Add(new MyModel(trash, worldMatrix, color, shininess, false));
 
             cuboids.Add(new Cuboid(1f, 11f, 1f, new Vector3(-49f, -2, 0), Color.Black, 100, false));
             cuboids.Add(new Cuboid(1.5f, 4f, 7f, new Vector3(-49f, 0, 0), Color.DarkOliveGreen, 100, true, lampTexture));
@@ -159,7 +157,7 @@ namespace WarszawaCentralna
             worldMatrix = Matrix.CreateTranslation(40, -10, 20);
             worldMatrix = Matrix.CreateRotationY(-MathHelper.PiOver2) * Matrix.CreateScale(0.8f) * Matrix.CreateTranslation(100, -10, 0);
 
-            models.Add(new MyModel(frame, worldMatrix, color, shininess));
+            modelsWithTexture.Add(new MyModel(frame, worldMatrix, color, shininess, true, renderTarget));
         }
 
         protected override void UnloadContent()
@@ -195,7 +193,6 @@ namespace WarszawaCentralna
                 if (!keyboardOldState.IsKeyDown(Keys.T))
                 {
                     if (platformTexture == concreteTexture)
-
                         platformTexture = woodTexture;
                     else
                         platformTexture = concreteTexture;
@@ -203,16 +200,23 @@ namespace WarszawaCentralna
                 }
             }
 
-            if (keyboardNewState.IsKeyDown(Keys.P))
+            if (keyboardNewState.IsKeyDown(Keys.P)) //szum perlina
             {
                 if (!keyboardOldState.IsKeyDown(Keys.P))
                 {
                     if (sceneTexture == wallTexture)
-
                         sceneTexture = perlinTexture;
                     else
                         sceneTexture = wallTexture;
                     scene.ChangeTexture(sceneTexture);
+                }
+            }
+
+            if (keyboardNewState.IsKeyDown(Keys.F)) //mgła
+            {
+                if (!keyboardOldState.IsKeyDown(Keys.F))
+                {
+                    fogEnabled = (fogEnabled + 1) % 2;
                 }
             }
 
@@ -233,68 +237,65 @@ namespace WarszawaCentralna
             }
         }
 
-        protected void DrawScene()
+        protected void DrawScene(Camera _camera)
         {
             GraphicsDevice.Clear(Color.Black);
             RasterizerState rasterizationState = new RasterizerState { MultiSampleAntiAlias = true };
             GraphicsDevice.RasterizerState = rasterizationState;
 
-            effectWithTexture.Parameters["View"].SetValue(camera.ViewMatrix);
-            effectWithTexture.Parameters["Projection"].SetValue(camera.ProjectionMatrix);
-            effectWithTexture.Parameters["CameraPosition"].SetValue(camera.Position);
+            effectWithTexture.Parameters["View"].SetValue(_camera.ViewMatrix);
+            effectWithoutTexture.Parameters["View"].SetValue(_camera.ViewMatrix);
 
+            effectWithTexture.Parameters["Projection"].SetValue(_camera.ProjectionMatrix);
+            effectWithoutTexture.Parameters["Projection"].SetValue(_camera.ProjectionMatrix);
 
-            effectWithoutTexture.Parameters["View"].SetValue(camera.ViewMatrix);
-            effectWithoutTexture.Parameters["Projection"].SetValue(camera.ProjectionMatrix);
-            effectWithoutTexture.Parameters["CameraPosition"].SetValue(camera.Position);
+            effectWithTexture.Parameters["CameraPosition"].SetValue(_camera.Position);
+            effectWithoutTexture.Parameters["CameraPosition"].SetValue(_camera.Position);
+
+            effectWithTexture.Parameters["FogEnabled"].SetValue(fogEnabled);
+            effectWithoutTexture.Parameters["FogEnabled"].SetValue(fogEnabled);
+
             scene.Draw(effectWithTexture, graphics);
-
-            foreach (MyModel model in models)
+            foreach (MyModel model in modelsWithoutTexture)
                 model.Draw(effectWithoutTexture);
+            modelsWithTexture[1].ChangeTexture(renderTarget);
+            foreach (MyModel model in modelsWithTexture)
+                model.Draw(effectWithTexture);
             foreach (Cuboid cuboid in cuboids)
                 cuboid.Draw(effectWithTexture, graphics);
-            effectWithTexture.Parameters["BasicTexture"].SetValue(ironmanTexture);
-            models[7].Draw(effectWithTexture);
-            effectWithTexture.Parameters["BasicTexture"].SetValue(renderTarget);
-            models[10].Draw(effectWithTexture);
         }
 
         protected override void Draw(GameTime gameTime)
         {
-            DrawSceneToTexture(renderTarget);
-            //scene.ChangeTexture(renderTarget); // CHANGE THIS
-
-            DrawScene();
-
+            DrawSceneToTexture(renderTarget, secondCamera); //can be camera
+            DrawScene(camera);
             base.Draw(gameTime);
         }
 
-        protected void DrawSceneToTexture(RenderTarget2D renderTarget)
+        protected void DrawSceneToTexture(RenderTarget2D renderTarget,Camera _camera)
         {
             //http://rbwhitaker.wikidot.com/render-to-texture
-
             // Set the render target
             GraphicsDevice.SetRenderTarget(renderTarget);
             GraphicsDevice.DepthStencilState = new DepthStencilState() { DepthBufferEnable = true };
             // Draw the scene
-            DrawScene();
+            DrawScene(_camera);
             // Drop the render target
             GraphicsDevice.SetRenderTarget(null);
         }
 
         public Texture2D CreatePerlinNoiseTexture(int sizex, int sizey)
         {
-            PerlinNoise pn = new PerlinNoise();
             Texture2D t = new Texture2D(GraphicsDevice, sizex, sizey);
             double[,] perlin = new double[sizex, sizey];
             Color[] cor = new Color[sizex * sizey];
             Random r = new Random();
-            
+
             for (int i = 0; i < sizex; i++)
             {
                 for (int j = 0; j < sizey; j++)
                 {
-                    double value = pn.OctavePerlin((double)i /20, (double)j/20, 0,9,0.5);
+                    double value = PerlinNoise.OctavePerlin((double)i / 20, (double)j / 20, 0, 9, 0.5);
                     perlin[i, j] = value;
                 }
             }
@@ -306,10 +307,8 @@ namespace WarszawaCentralna
                     cor[i + j * sizex] = new Color((float)perlin[i, j], (float)perlin[i, j], (float)perlin[i, j]);
                 }
             }
-
             t.SetData(cor);
             return t;
         }
-
     }
 }

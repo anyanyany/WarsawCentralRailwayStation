@@ -49,7 +49,7 @@ sampler TextureSamplerMagNone = sampler_state {
 	AddressV = Wrap;
 };
 
-float     FogEnabled = 1;
+float     FogEnabled;
 float     FogStart = 50;
 float     FogEnd = 150;
 float3    FogColor = float3(0.5, 0.5, 0.5);
@@ -106,8 +106,7 @@ float4 PixelShaderFunction(VertexShaderOutput input) : COLOR0
 			if (SecondTextureEnabled)
 			{
 				float4 secondTextureColor = AdditionalTexture.Sample(TextureSamplerMagLinear, input.UV);
-				if (secondTextureColor.a != 0)
-					Ambient *= secondTextureColor.rgb;
+				Ambient += (secondTextureColor.rgb*secondTextureColor.a);
 			}			
 		}
 		else
@@ -116,8 +115,7 @@ float4 PixelShaderFunction(VertexShaderOutput input) : COLOR0
 			if (SecondTextureEnabled)
 			{
 				float4 secondTextureColor = AdditionalTexture.Sample(TextureSamplerMagNone, input.UV);
-				if (secondTextureColor.a != 0)
-					Ambient *= secondTextureColor.rgb;
+				Ambient += (secondTextureColor.rgb*secondTextureColor.a);
 			}
 		}
 			
@@ -129,9 +127,6 @@ float4 PixelShaderFunction(VertexShaderOutput input) : COLOR0
 		float3 N = normalize(input.Normal);
 		float3 V = normalize(CameraPosition - input.WorldPosition.xyz);
 		float3 R = -reflect(L, N);
-
-		//if (TextureEnabled)
-		//	Kd[i] *= tex2D(BasicTextureSampler, input.UV).rgb;
 
 		float diffuseFactor = saturate(dot(N, L));
 		float3 Diffuse = diffuseFactor * Kd[i] * Id[i];

@@ -49,6 +49,7 @@ namespace WarszawaCentralna
         bool gaussianBlurEnabled;
         SpriteBatch spriteBatch;
         bool multiSamplingEnabled;
+        string perlinPath;
 
         public Game1()
         {
@@ -65,6 +66,7 @@ namespace WarszawaCentralna
             graphics.PreferMultiSampling = true;
             fogEnabled = 1.0f;
             gaussianBlurEnabled = false;
+            perlinPath = "PERLIN.png";
 
         }
 
@@ -100,26 +102,9 @@ namespace WarszawaCentralna
             platformTexture = concreteTexture;
             sceneTexture = wallTexture;
 
-            if (File.Exists("PERLIN.png"))
-            {
-                FileStream filestream = new FileStream("PERLIN.png", FileMode.Open);
-                perlinTexture = Texture2D.FromStream(GraphicsDevice, filestream);
-            }
-            else
-            {
-                Stream stream = File.Create("PERLIN.png");
-                perlinTexture = CreatePerlinNoiseTexture(1000, 400);
-                perlinTexture.SaveAsPng(stream, 1000, 400);
-                stream.Dispose();
-            }
-
             effects.Add(effectWithTexture);
             effects.Add(effectWithoutTexture);
             lightManager = new LightManager(effects);
-
-            scene = new Scene(200f, 40f, 80f, new Vector3(0, 0, 0), Color.Silver, 50, wallTexture);
-            platform = new Cuboid(200f, 10f, 30f, new Vector3(0, -7.5f, 0), Color.DarkGray, 50, true, concreteTexture, linesTexture);
-            cuboids.Add(platform);
 
             PointLight pl1 = new PointLight(new Vector3(50, 19, 0), Color.LightYellow, Color.LightYellow, 0.5f, 0.9f, 50.0f, 3.0f);
             PointLight pl2 = new PointLight(new Vector3(-50, 19, 0), Color.LightYellow, Color.LightYellow, 0.5f, 0.9f, 50.0f, 2.0f);
@@ -134,11 +119,28 @@ namespace WarszawaCentralna
             lightManager.addSpotLight(sl2);
             lightManager.SetEffectParameters();
 
+            if (File.Exists(perlinPath))
+            {
+                FileStream filestream = new FileStream(perlinPath, FileMode.Open);
+                perlinTexture = Texture2D.FromStream(GraphicsDevice, filestream);
+            }
+            else
+            {
+                Stream stream = File.Create(perlinPath);
+                perlinTexture = CreatePerlinNoiseTexture(1000, 400);
+                perlinTexture.SaveAsPng(stream, 1000, 400);
+                stream.Dispose();
+            }
+
             LoadModels();
         }
 
         private void LoadModels()
         {
+            scene = new Scene(200f, 40f, 80f, new Vector3(0, 0, 0), Color.Silver, 50, wallTexture);
+            platform = new Cuboid(200f, 10f, 30f, new Vector3(0, -7.5f, 0), Color.DarkGray, 50, true, concreteTexture, linesTexture);
+
+            cuboids.Add(platform);
             Matrix worldMatrix = Matrix.CreateRotationZ(-MathHelper.PiOver2) * Matrix.CreateRotationY(MathHelper.PiOver2) * Matrix.CreateScale(0.1f, 0.2f, 0.15f) * Matrix.CreateTranslation(0, 0, -25f);
             Color color = Color.Black;
             float shininess = 250f;
@@ -171,16 +173,11 @@ namespace WarszawaCentralna
             cuboids.Add(new Cuboid(1f, 11f, 1f, new Vector3(-49f, -2, 0), Color.Black, 100, false));
             cuboids.Add(new Cuboid(1.5f, 4f, 7f, new Vector3(-49f, 0, 0), Color.DarkOliveGreen, 100, true, lampTexture));
 
-            worldMatrix = Matrix.CreateTranslation(40, -10, 20);
             worldMatrix = Matrix.CreateRotationY(-MathHelper.PiOver2) * Matrix.CreateScale(0.8f) * Matrix.CreateTranslation(100, -10, 0);
-
             modelsWithTexture.Add(new MyModel(frame, worldMatrix, color, shininess, true, renderTarget));
         }
 
-        protected override void UnloadContent()
-        {
-
-        }
+        protected override void UnloadContent() {}
 
         protected override void Update(GameTime gameTime)
         {
@@ -273,8 +270,12 @@ namespace WarszawaCentralna
         protected void DrawScene(Camera _camera)
         {
             GraphicsDevice.Clear(Color.Black);
-            RasterizerState rasterizationState = new RasterizerState { MultiSampleAntiAlias = multiSamplingEnabled };
-            GraphicsDevice.RasterizerState = rasterizationState;
+            //RasterizerState rasterizationState = new RasterizerState { MultiSampleAntiAlias = multiSamplingEnabled };
+            //GraphicsDevice.RasterizerState = rasterizationState;
+            //https://msdn.microsoft.com/pl-pl/library/bb975403.aspx
+            RasterizerState rasterizerState = new RasterizerState();
+            //rasterizerState.CullMode = CullMode.None;
+            graphics.GraphicsDevice.RasterizerState = rasterizerState;
 
             effectWithTexture.Parameters["View"].SetValue(_camera.ViewMatrix);
             effectWithoutTexture.Parameters["View"].SetValue(_camera.ViewMatrix);
@@ -365,7 +366,7 @@ namespace WarszawaCentralna
             double minimumBrightness = 120;
             Color[] colors = new Color[sizex * sizey];
             image.GetData<Color>(colors);
-            int filterSize = 7;
+            int filterSize = 5;
             double[,] filterMatrix = new double[filterSize, filterSize];
 
             int filterOffset = (int)((filterSize - 1) / 2);
@@ -385,7 +386,7 @@ namespace WarszawaCentralna
                     double L = 0.3 * r + 0.59 * g + 0.11 * b;
                     if (L >= minimumBrightness)
                     {
-                        stddev = 0.03*L / 2;
+                        stddev = 0.6+4*(L-minimumBrightness)/(255-minimumBrightness);
                         double sum = 0;
                         for (int x = -filterOffset; x <= filterOffset; x++)
                         {

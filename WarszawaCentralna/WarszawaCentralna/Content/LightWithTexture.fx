@@ -34,19 +34,17 @@ bool SecondTextureEnabled = false;
 bool filterMagLinear;
 
 sampler TextureSamplerMagLinear = sampler_state {
-	//texture = <BasicTexture>;
 	MagFilter = Linear;
-	MipLODBias = 10;
-	AddressU = Wrap;
-	AddressV = Wrap;
+	//MipLODBias = 10;
+	//AddressU = Wrap;
+	//AddressV = Wrap;
 };
 
 sampler TextureSamplerMagNone = sampler_state {
-	//texture = <BasicTexture>;
 	MagFilter = None;
 	//MipLODBias = 10;
-	AddressU = Wrap;
-	AddressV = Wrap;
+	//AddressU = Wrap;
+	//AddressV = Wrap;
 };
 
 float     FogEnabled;

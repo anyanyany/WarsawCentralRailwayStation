@@ -301,7 +301,7 @@ namespace WarszawaCentralna
 
         protected override void Draw(GameTime gameTime)
         {
-            DrawSceneToTexture(renderTarget, secondCamera); //can be camera
+            DrawSceneToTexture(renderTarget, camera); //can be camera
             DrawScene(camera);
 
             if (gaussianBlurEnabled)
